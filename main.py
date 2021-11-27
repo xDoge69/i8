@@ -1,124 +1,97 @@
-from asyncio.subprocess import STDOUT
-import sys
-import discord
-import os
-import random
-import datetime
-import asyncio
-import json
 import aiohttp
-from discord.ext import commands
+import discord
+import random
+# import urllib
+import os
+import datetime
 import sys
+import json
+import asyncio
+from discord.ext import commands
 from io import BytesIO, StringIO
 import contextlib
-
-@contextlib.contextmanager
-def stdoutIO(stdout=None):
-    old = sys.stdout
-    if stdout is None:
-        stdout = StringIO()
-    sys.stdout = stdout
-    yield stdout
-    sys.stdout = old
 # from PIL import Image
+from webserver import keep_alive
 
-def doge_or_wot(ctx):
+def is_it_me(ctx):
   return ctx.author.id == 686220733747298448
 
 def get_prefix(client, message):
-    with open("prefixes.json", "r") as f:
-        prefixes = json.load(f)
-    return prefixes[str(message.guild.id)]
+  with open('prefixes.json', 'r') as f:
+    prefixes = json.load(f)
+  return prefixes[str(message.guild.id)]
 
-client = commands.Bot(command_prefix=get_prefix,case_insensitive=True, intents=discord.Intents.all())
-# client.remove_command('help')
-
-@client.event
-async def on_ready():
-    guild = client.get_guild(866552630754803732)
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name=f"Deez Nuts."))
-    print("Bot is Ready.")
-    # with open("prefixes.json", "r") as f:
-    #     prefixes = json.load(f)
-    # prefixes[str(guild.id)] = "%"
-    # with open("prefixes.json", "w") as f:
-    #     json.dump(prefixes, f)
-
-# WELCOME
-@client.event
-async def on_member_join(member):
-  welcch = client.get_channel(892770226259755048)
-  await welcch.send(member.mention)
-  embed = discord.Embed(
-  description=f"""
-Welcome to **Doge's Server!**
-
--Check these out:
-> ❤️<#866552774630965258>
-> ❤️<#892796760156684348>
--Hope you have a Nice Stay!
-  """,
-  color = discord.Colour.dark_blue())
-  embed.set_author(name=member.name, icon_url=member.avatar.url)
-  embed.set_footer(text=f"You're Member {member.guild.member_count}!")
-  embed.set_thumbnail(url=member.avatar.url)
-  await welcch.send(embed=embed)
+client = commands.Bot(command_prefix=get_prefix, case_insensitive=True, intents=discord.Intents.all())
+client.remove_command('help')
 
 @client.event
 async def on_command_error(ctx, error):
   raise error
 
-@client.command(aliases=['playing'])
-@commands.has_permissions(administrator=True)
-async def p(ctx, *, status):
-  await client.change_presence(activity=discord.Game(name=status))
-  await ctx.send("✅ Successful.")
+black = 0x000000
 
-@client.command(aliases=['watching'])
-@commands.has_permissions(administrator=True)
-async def w(ctx, *, status):
-  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
-  await ctx.send("✅ Successful.")
+@client.event
+async def on_ready():
+  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"#i8"))
+  print('Bot is Ready.')
+  # with open('prefixes.json', 'r') as f:
+  #   prefixes = json.load(f)
+  # prefixes[f'{guild.id}'] = "$"
+  # with open('prefixes.json', 'w') as f:
+  #   json.dump(prefixes, f)
 
-@client.command(aliases=['listening'])
-@commands.has_permissions(administrator=True)
-async def l(ctx, *, status):
-  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=status))
-  await ctx.send("✅ Successful.")
 
-@client.command(aliases=['compete', 'competing'])
-async def c(ctx, *, status):
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name=status))
-    await ctx.send("✅ Successful.")
- 
-@client.command()
-async def disc(ctx):
-    await ctx.send("https://discord.gg/rjGWmGwAtU")
+@client.event
+async def on_member_remove(member):
+  channel = member.guild.get_channel(907294315028578414)
+  await channel.send(f"""
+Member Left
+----------------
+Name: {member}
+Mention: {member.mention}
+----------------
+Come Back Again!
+  """)
+
+@client.event
+async def on_member_join(member):
+  wchannel = member.guild.get_channel(899965613861134350)
+  embed = discord.Embed(title="New Member!", description=f"""
+Welcome To Initiative 8, {member.mention}
+
+❤️Make Sure To:
+> -<#899977751501627443>: Read The Rules
+> -<#899971705542410250>: Read About i8
+> -<#899965613861134351>: Chill and Hang Out!
+️️️❤️Enjoy Your Stay!
+  """, color = discord.Colour.random(), timestamp = datetime.datetime.now(datetime.timezone.utc))
+  embed.set_thumbnail(url=member.avatar_url)
+  await wchannel.send(embed=embed)
 
 deleted = set()
 @client.event
 async def on_message_delete(message):
-  if message.mentions:
-    for s in message.mentions:
-      if s == message.author:
-        return
-      elif s == client.user:
-        return
-      elif message.author == client.user:
-        return
-      elif message.author.bot == True:
-        return
-      elif s.bot == True:
-        return
-      else:
-        await message.channel.send(f"{s.mention} was Ghost Pinged by {message.author.mention}.")
+  # if message.mentions:
+  #   for s in message.mentions:
+  #     if s == message.author:
+  #       return
+  #     elif s == client.user:
+  #       return
+  #     elif message.author == client.user:
+  #       return
+  #     elif message.author == message.author.bot:
+  #       return
+  #     elif s == message.author.bot:
+  #       return
+  #     else:
+  #       await message.channel.send(f"{s.mention} was Ghost Pinged by {message.author.mention}.")
   msg = message.content or message.attachments
   if not message.author.bot == True:
     if not msg == message.attachments:
       deleted.clear()
       deleted.add(message)
 
-@client.command(description=f"snipe", aliases=['snip'])
+@client.command(aliases=['snip'], description=f"snipe")
 async def snipe(ctx):
   if deleted == set():
     await ctx.send("There's nothing to snipe!")
@@ -134,8 +107,7 @@ async def snipe(ctx):
       else:
         await ctx.send("There's nothing to snipe!")
 
-@client.command(description=f"cprefix <prefix>")
-@commands.has_permissions(administrator=True)
+@client.command(description="cprefix <prefix>")
 async def cprefix(ctx, *, prefix):
   with open('prefixes.json', 'r') as f:
     prefixes = json.load(f)
@@ -144,43 +116,34 @@ async def cprefix(ctx, *, prefix):
     json.dump(prefixes, f)
   await ctx.send(f"The prefix was changed to **{prefix}**")
 
-@client.command(description=f"purge <amount>")
+@client.command(description="purge <amount>")
 @commands.has_permissions(manage_messages=True)
-async def purge(ctx, amount=0):
-    await ctx.message.delete()
-    channel = ctx.message.channel
-    await channel.purge(limit=amount)
-
-@purge.error
-async def purgerror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You're missing the **Manage Messages** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please Specify an Amount.")
+async def purge(ctx, amount:int=None):
+  channel = ctx.message.channel
+  # messages = []
+  #async for message in channel.history(limit=amount + 1):
+    # messages.append(message)
+  if amount == None:
+    return await ctx.send("Please Specify an amount.")
+  else:
+    await channel.purge(limit = amount + 1)
 
 # KICK
 @client.command(description="kick <member> [reason]")
-@commands.has_permissions(kick_members=True)
+@commands.has_permissions(administrator=True)
 async def kick(ctx, member: discord.Member, *, reason=None):
-    await member.send(reason)
-    await member.kick(reason=reason)
-    await ctx.send(f'{member.mention} has been kicked!')
-
-@kick.error
-async def kickrror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You are Missing the **Kick Members** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please Specify the Member you want to Kick.")
+  await member.send(f"You have been kicked from **{ctx.guild}** | {reason}")
+  await member.kick(reason=reason)
+  await ctx.send(f'{member.mention} has been kicked!')
 
 # BAN AND UNBAN
-@client.command(description=f"ban <member> [reason]")
-@commands.has_permissions(ban_members=True)
+@client.command(description="ban <member> [reason]")
+@commands.has_permissions(administrator=True)
 async def ban(ctx, user:discord.User, *, arg=None):
   if arg == None:
     arg = 'No Reason given.'
   try:
-    await ctx.guild.ban(user, reason=arg)
+    await ctx.guild.ban(user, reason=arg), await user.send(f"You have been banned from **{ctx.guild}** | {arg}")
     embed = discord.Embed(description=f"""
 ✅ ***{user} was Banned.*** | {arg}
     """, color = discord.Colour.green())
@@ -190,10 +153,8 @@ async def ban(ctx, user:discord.User, *, arg=None):
 
 @ban.error
 async def banerror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You are Missing the **Ban Members** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f'''
+  if isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send(f'''
 **Ban**
 
 **How To Use:**
@@ -201,10 +162,10 @@ async def banerror(ctx, error):
 
 **Example Use:**
 {get_prefix(client, ctx.message)}ban @-1Doge#9999 Being Unfriendly
-        ''')
+    ''')
 
-@client.command(description=f"unban <member>")
-@commands.has_permissions(ban_members=True)
+@client.command(description="unban <user>")
+@commands.has_permissions(administrator=True)
 async def unban(ctx, user: discord.User):
   try:
     await ctx.guild.unban(user)
@@ -213,39 +174,33 @@ async def unban(ctx, user: discord.User):
   except:
     await ctx.send("Not a previously banned member.")
 
-@unban.error
-async def unbanerror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You are Missing the **Ban Members** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"""
-**Unban**
-
-**How To Use:**
-{get_prefix(client, ctx.message)}unban <user>
-
-**Example Use:**
-{get_prefix(client, ctx.message)}unban @-1Doge#4337
-        """)
-
-@client.command()
+@client.command(description="say <message>")
 @commands.has_permissions(manage_messages=True)
 async def say (ctx, *, arg):
-  await ctx.message.delete()
   await ctx.send(arg)
 
 @say.error
 async def sayrror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You can't use that.")
+    await ctx.send("You can't use that you Lil qt.")
 
+@client.command(description="inrole <role>")
+async def inrole(ctx, role: discord.Role):
+  memberlist = '\n'.join([x.name for x in role.members])
+  embed = discord.Embed(
+    title=f'Members That Have The {role} Role!',
+    description=f'{memberlist}',
+    color = black
+  )
+  await ctx.send(embed=embed)
 
-@client.command(description=f"mute <member> [time] [reason]")
+# MUTE COMMAND
+@client.command(description="mute <member> [time] [reason]")
 @commands.has_permissions(manage_roles=True)
 async def mute(ctx, member:discord.Member, dtime=None,*, reason=None):
   if dtime is None:
     dtime = 300
-  mute_role = ctx.guild.get_role(867724234728669214)
+  mute_role = ctx.guild.get_role(899972372403204176)
   if (member.guild_permissions.administrator):
     return await ctx.send(f"{member} is an Admin so I cannot mute them.")
   else:
@@ -275,25 +230,47 @@ async def mute(ctx, member:discord.Member, dtime=None,*, reason=None):
       embed = discord.Embed(description=f"✅ ***{member} was Unmuted.***", color = discord.Colour.green())
       await ctx.send(embed=embed)
 
-@mute.error
-async def murror(ctx, error):
-  if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You are Missing the **Manage Roles** Permission.")
-  elif isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send(f'''
-**Mute**
+# @mute.error
+# async def murror(ctx, error):
+#   if isinstance(error, commands.MissingRequiredArgument):
+#     await ctx.send(f'''
+# **Mute**
 
-**How To Use:**
-{get_prefix(client, ctx.message)}mute <member> <reason>
+# **How To Use:**
+# {get_prefix(client, ctx.message)}mute <member> <reason>
 
-**Example Use:**
-{get_prefix(client, ctx.message)}mute @-1Doge#4337 Breaking The Rules.
-    ''')
+# **Example Use:**
+# {get_prefix(client, ctx.message)}mute @-1Doge#9999 Breaking The Rules.
+#     ''')
 
-@client.command(description=f"unmute <member>")
+'''
+@client.command()
+@commands.has_permissions(manage_roles=True)
+async def mute(ctx, member : discord.Member, timme:int=None,*, reason=None):
+  if timme is None:
+    timme = 300
+  mute_role = ctx.guild.get_role(906860427609272340)
+  if (member.guild_permissions.administrator):
+    return await ctx.send(f"{member} is an Admin so I cannot mute them.")
+  else:
+    if discord.utils.get(member.roles, name='Muted') is not None:
+      await ctx.send(F"{member} is already Muted.")
+    else:
+      await member.add_roles(mute_role)
+      embed = discord.Embed(
+      description=f"***✅ {member} was Muted | Reason: {reason}***",
+      color = discord.Colour.dark_green())
+      await ctx.send(embed=embed)
+      await asyncio.sleep(timme)
+      await member.remove_roles(mute_role)
+      embed = discord.Embed(description=f"✅ ***{member} was Unmuted.***", color = discord.Colour.green())
+      await ctx.send(embed=embed)
+'''
+
+@client.command(description="unban <user>")
 @commands.has_permissions(manage_roles=True)
 async def unmute(ctx,member : discord.Member):
-  muterole = ctx.guild.get_role(867724234728669214)
+  muterole = ctx.guild.get_role(906860427609272340)
   if discord.utils.get(member.roles, name='Muted') is None:
     return await ctx.send("That Member is not Muted.")
   else:
@@ -307,7 +284,7 @@ async def unmurror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
     await ctx.send("You don't have the perms to use this command.")
 
-@client.command(description=f"crole <rolename>",aliases=['createrole', 'creater'])
+@client.command(description="crole <role>",aliases=['createrole', 'creater'])
 @commands.has_permissions(manage_roles=True) 
 async def crole(ctx, *, name):
 	guild = ctx.guild
@@ -315,9 +292,9 @@ async def crole(ctx, *, name):
 	await ctx.send(f'✅ Role `{name}` has been Created.')
 
 @crole.error
-async def crolerror(ctx, error):
+async def croleerror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You are Missing the **Manage Roles** Permission.")
+    await ctx.send("You don't have the perms to use this command.")
 
 @client.command(description="drole <role>")
 @commands.has_permissions(manage_roles=True)
@@ -328,49 +305,52 @@ async def drole(ctx, *, role: discord.Role):
 @drole.error
 async def drror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You are Missing the **Manage Roles** Permission.")
+    await ctx.send("You don't have the perms to use this command.")
 
-@client.command()
-@commands.check(doge_or_wot)
-async def disable(ctx, *, command: client.get_command):
-  if not command.enabled:
-    await ctx.send(f"❌ **{command}** is already Disabled.")
-  else:
-    command.enabled = False
-    await ctx.send(f"✅ **{command} has Been Disabled.")
-
-@client.command()
-@commands.check(doge_or_wot)
-async def enable(ctx, *, command: client.get_command):
-  if command.enabled:
-    await ctx.send(f"❌ **{command}** is Already Enabled.")
-  else:
-    command.enabled = True
-    await ctx.send(f"✅ **{command}** has been Enabled.")
+# @client.command()
+# @commands.has_permissions(manage_channels=True)
+# @commands.cooldown(3,30,commands.BucketType.user)
+# async def toggle(ctx, *, command):
+#   command = client.get_command(command)
+#   if command is None:
+#     await ctx.send('❌ What sort of Command is even that?')
+#   if command == 'toggle':
+#     return await ctx.send("❌ You can't disable toggle idiot.")
+#   else:
+#     command.enabled = not command.enabled
+#     ternary = 'enabled' if command.enabled else 'disabled'
+#     await ctx.send(f'✅ I have {ternary} {command.qualified_name}.')
 
 #ROLES ADDING AND REMOVING
-@client.command(description=f"role <member> [roles...]")
+@client.command(description="role <member> [roles...]")
 @commands.has_permissions(manage_roles=True)
 async def role(ctx,member: discord.Member,*,input_role):
+    ini = ctx.guild.get_role(900000661985439774)
     input_role = input_role.split(', ')
     server_roles = ctx.guild.roles
     for r in input_role:
         for s in server_roles:
             if s.name.lower().startswith(r.lower()):
-                if s not in member.roles:
-                    await member.add_roles(s)
-                    embed = discord.Embed(description=f"✅ **Added {s.mention} to {member.mention}**")
+              if ini < s:
+                return await ctx.send("That role is higher than my Official Bot Role so I cannot Add/Remove it.")
+              else:
+                  if s not in member.roles:
+                      await member.add_roles(s)
+                      embed = discord.Embed(description=f"✅ **Added {s.mention} to {member.mention}**")
+                      await ctx.send(embed=embed)
+                  else:
+                    await member.remove_roles(s)
+                    embed = discord.Embed(description=f"✅ **Removed {s.mention} from {member.mention}**")
                     await ctx.send(embed=embed)
-                else:
-                  await member.remove_roles(s)
-                  embed = discord.Embed(description=f"✅ **Removed {s.mention} from {member.mention}**")
-                  await ctx.send(embed=embed)
 
 @role.error
 async def rolerror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("❌ You are Missing the **Manage Role** Permission.")
-  elif isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send("❌ You don't have the **Manage Role** Perm to use that Command.")
+
+@role.error
+async def rolemrror(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
     await ctx.send(f"""
 **Role**
 
@@ -381,7 +361,7 @@ async def rolerror(ctx, error):
 {get_prefix(client, ctx.message)}role @-1Doge#4337 Community
   """)
 
-@client.command(description=f"slowmode <seconds>")
+@client.command(description="slowmode <seconds>")
 @commands.has_permissions(manage_channels=True)
 async def slowmode(ctx, seconds: int):
   await ctx.channel.edit(slowmode_delay=seconds)
@@ -390,9 +370,29 @@ async def slowmode(ctx, seconds: int):
 @slowmode.error
 async def slowmodor(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You are Missing the **Manage Channels** Permission.")
+    await ctx.send("You don't have the perms to use this command.")
 
-@client.command(description=f"sinfo", aliases=['serverinfo'])
+# @client.command()
+# async def wanted(ctx, member : discord.Member = None):
+#   if member == None:
+#     member = ctx.author
+
+#   wanted = Image.open("wanted.jpg")
+
+#   asset = member.avatar_url_as(size = 128)
+#   data = BytesIO(await asset.read())
+#   profilepic = Image.open(data)
+
+#   profilepic = profilepic.resize((117, 117))
+
+#   wanted.paste(profilepic, (32, 75))
+
+#   wanted.save("wantedpic.jpg")
+
+#   await ctx.send(file = discord.File("wantedpic.jpg"))
+#   os.remove("wantedpic.jpg")
+
+@client.command(description="sinfo",aliases=['serverinfo'])
 async def sinfo(ctx):
   name = ctx.guild.name
   id = ctx.guild.id
@@ -412,11 +412,11 @@ async def sinfo(ctx):
   embed.add_field(name="Channel Categoies", value=f"{len(categories)}", inline=True)
   embed.add_field(name="Text Channels", value=f"{len(channels)}", inline=True)
   embed.add_field(name="Voice Channels", value=f"{len(voicech)}", inline=True)
-  embed.set_thumbnail(url=ctx.guild.icon_url)
   embed.set_footer(text=f"ID: {id}")
+  embed.set_thumbnail(url=ctx.guild.icon_url)
   await ctx.send(embed=embed)
 
-@client.command(dewscription=f"emojiadd <emojilink> <emojiname>", aliases=['eadd', 'emadd', 'steal'])
+@client.command(description="steal <emojilink> <emojiname>",aliases=['steal', 'eadd', 'emadd'])
 @commands.has_permissions(manage_emojis=True)
 async def emojiadd(ctx, url: str=None, *, name):
   guild = ctx.guild
@@ -439,66 +439,37 @@ async def emojiadd(ctx, url: str=None, *, name):
         em = discord.Embed(description=f"❌ File Size is Too Big or Max Emoji Limit Reached.")
         await ctx.send(embed=em)
 
-@emojiadd.error
-async def emojiaddrror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You are Missing the **Manage Server** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"""
-**Steal**
-
-**How To Use:**
-{get_prefix(client, ctx.message)}steal <emojilink> <emojiname>
-
-**Example Use:**
-{get_prefix(client, ctx.message)}steal <https://cdn.discordapp.com/emojis/89301115824.png?size=128> thonk
-        """)
-
-@client.command(description=f"emojiremove <emoji>", aliases=['eremove', 'emremove'])
+@client.command(description="emojiremove <emoji>",aliases=['eremove', 'emremove'])
 @commands.has_permissions(manage_emojis=True)
 async def emojiremove(ctx, emoji: discord.Emoji):
   em = discord.Embed(description=f"✅ Successfully deleted Emoji {emoji}")
   await ctx.send(embed=em)
   await emoji.delete()
 
-@emojiremove.error
-async def emojierror(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You are Missing the **Manage Server** Permission.")
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"""
-**Emremove**
-
-**How To Use:**
-{get_prefix(client, ctx.message)}emremove <emoji>
-
-**Example Use:**
-{get_prefix(client, ctx.message)}emremove :skull:
-        """)
-
-@client.command(description=f"membercount")
+@client.command(description="membercount", aliases=['mcount'])
 async def membercount(ctx):
   guild = ctx.guild
   embed=discord.Embed(title="Members", description=guild.member_count, color = discord.Colour.dark_blue())
   await ctx.send(embed=embed)
 
-@client.command(description=f"av [member]", aliases=['avatar'])
+@client.command(description="av [member]",aliases=['avatar'])
 async def av(ctx, member : discord.Member = None):
   if member == None:
     member = ctx.author
   embed = discord.Embed(
     title = f"{member}'s Avatar!",
+    description = "**Avatar**",
     color = discord.Colour.dark_blue()
   )
-  embed.set_author(name=f"{member}", icon_url=f"{member.avatar.url}")
-  embed.set_image(url=member.avatar.url)
+  embed.set_author(name=f"{member}", icon_url=f"{member.avatar_url}")
+  embed.set_image(url=member.avatar_url)
 
   await ctx.send(embed=embed)
 
-@client.command(description=f"lock [channel]")
+@client.command(description="lock [channel]")
 @commands.has_permissions(manage_channels=True)
 async def lock(ctx, channel: discord.TextChannel=None):
-  roleneedstobelocked = ctx.guild.get_role(866553229591445504)
+  roleneedstobelocked = ctx.guild.get_role(899965953356492840)
   if channel == None:
     channel = ctx.channel
     await channel.set_permissions(roleneedstobelocked, send_messages=False)
@@ -513,33 +484,34 @@ async def lock(ctx, channel: discord.TextChannel=None):
     """, color = discord.Colour.green())
     await ctx.send(embed=embed)
 
-@client.command(description=f"unlock [channel]")
+
+@client.command(description="unlock [channel]")
 @commands.has_permissions(manage_channels=True)
 async def unlock(ctx, channel: discord.TextChannel=None):
-  roleneedstobeunlocked = ctx.guild.get_role(866553229591445504)
+  roleneedstobeunlocked = ctx.guild.get_role(899965953356492840)
   if channel == None:
     channel = ctx.channel
-    await channel.set_permissions(roleneedstobeunlocked, send_messages=None)
+    await channel.set_permissions(roleneedstobeunlocked, send_messages=True)
     embed = discord.Embed(title="Channel Unlocked.", description=f"""
 *✅ **{ctx.channel.mention} Has Been Unlocked!***
     """, color = discord.Colour.green())
     await ctx.send(embed=embed)
   else:
-    await channel.set_permissions(roleneedstobeunlocked, send_messages=None)
+    await channel.set_permissions(roleneedstobeunlocked, send_messages=True)
     embed = discord.Embed(title="Channel Unlocked.", description=f"""
 *✅ **{channel.mention} Has Been Unlocked!***
     """, color = discord.Colour.green())
     await ctx.send(embed=embed)
 
-@client.command(description=f"sname <name>")
-@commands.has_any_role(866553374149443585)
+@client.command(description="sname <name>")
+@commands.has_any_role(906816175617503272)
 async def sname(ctx, *, gname):
   guild = ctx.guild
   embed = discord.Embed(description=f"✅ Server Name Changed from **{guild.name}** to **{gname}**.", color = discord.Colour.green())
   await ctx.send(embed=embed)
   await guild.edit(name=gname)
 
-@client.command(description=f"nick <member> <nickname>", aliases=['nickname', 'setnick'])
+@client.command(description="nick <member> <nickname>",aliases=['nickname', 'setnick'])
 @commands.has_permissions(manage_nicknames=True)
 async def nick(ctx, member: discord.Member=None, *, nickname):
   if member == None:
@@ -554,9 +526,9 @@ async def nick(ctx, member: discord.Member=None, *, nickname):
 @nick.error
 async def nickerror(ctx, error):
   if isinstance(error, commands.MissingPermissions):
-    await ctx.send("You are Missing the **Manage Nicknames** Permission.")
+    await ctx.send("You need the **Manage Nicknames** Permission to use this Command.")
 
-@client.command(description=f"remind <time> <task>",aliases=['remindme', 'rem'])
+@client.command(description="remind <time> <task>",aliases=['remindme', 'rem'])
 async def remind(ctx, time, *, task):
   def convert(time):
     pos = ['s', 'm', 'h', 'd']
@@ -583,6 +555,120 @@ Hey {ctx.author.mention} here's your reminder for **{task}**! [Jump To Original 
   """, color = discord.Colour.green(), timestamp = datetime.datetime.now(datetime.timezone.utc))
   await ctx.author.send(embed=embed)
   await ctx.send(f"Check your DMs {ctx.author.mention}")
+
+@client.command(aliases=['vfy', 'veri'])
+async def verify(ctx):
+  await ctx.message.delete()
+  role = ctx.guild.get_role(899965953356492840)
+  if ctx.channel.id == 908584342341685308:
+    embed = discord.Embed(title="**Success ✅**", description=F"{ctx.author.mention} you have been verified!", color = discord.Colour.green())
+    await ctx.author.send(embed=embed)
+    await ctx.author.add_roles(role)
+  else:
+    pass
+
+@contextlib.contextmanager
+def stdoutIO(stdout=None):
+    old = sys.stdout
+    if stdout is None:
+        stdout = StringIO()
+    sys.stdout = stdout
+    yield stdout
+    sys.stdout = old
+
+@client.command(description="run <code>")
+async def run(ctx, *, code):
+  if ctx.author.id == 686220733747298448 or 570993199963832321:
+    if not code.startswith('```py'):
+      return await ctx.send("Your message should start with \```py and end with \```")
+    if not code.endswith('```'):
+      return await ctx.send("Your message should start with \```py and end with \```")
+    code = code[+5:]
+    code = code[:-3]
+    with stdoutIO() as s:
+      exec(code)
+    output = s.getvalue()
+    await ctx.send(f"** **{output}")
+  else:
+    await ctx.send("I totally don't have a command like that 😶")
+
+ppsizes = ['8==D', '8===D', '8====D', '8=====D', '8======D', '8=======D', '8==========D', '8=============D']
+
+@client.command(description="pp [member]")
+async def pp(ctx, *, member: discord.Member=None):
+  if member == None:
+    member = ctx.author
+  embed = discord.Embed(description=f"{random.choice(ppsizes)}" ,color = discord.Colour.blurple())
+  embed.set_author(name=f"{member}'s PP Size:", icon_url=member.avatar_url)
+  await ctx.send(embed=embed)
+
+@client.command()
+async def remove(ctx, *, command):
+  if ctx.author.id == 686220733747298448:
+    client.remove_command(command)
+    await ctx.send(f"Removed {command}")
+
+# @client.command(description="gayrate [member]")
+# async def gayrate(ctx, *, member: discord.Member=None):
+#     rates = ['59', '68', '13', '69', '96', '83', '46', '19', '27', '47', '21']
+#     if member == None:
+#       member = ctx.author
+#     embed = discord.Embed(description=f"{random.choice(rates)}%", color = discord.Colour.blurple())
+#     embed.set_author(name=f"How gae is {member}?", icon_url=member.avatar_url)
+#     await ctx.send(embed=embed)
+
+# @client.command(description="simprate [member]")
+# async def simprate(ctx, *, member: discord.Member=None):
+#     rates = random.randint(1, 100)
+#     if member == None:
+#       member = ctx.author
+#     embed = discord.Embed(description=f"{rates}%", color = discord.Colour.blurple())
+#     embed.set_author(name=f"{member} is a Simp by:", icon_url=member.avatar.url)
+#     await ctx.send(embed=embed)
+
+# @client.command(description="meme")
+# async def meme(ctx):
+#   memeApi = urllib.request.urlopen('https://meme-api.herokuapp.com/gimme')
+#   memeData = json.load(memeApi)
+#   memeUrl = memeData['url']
+#   memeName = memeData['title']
+#   # memePoster = memeData['author']
+#   # memeSub = memeData['subreddit']
+#   memeLink = memeData['postLink']
+#   embed = discord.Embed(description=f"**[{memeName}]({memeLink})**", color = discord.Colour.random())
+#   embed.set_image(url=memeUrl)
+#   embed.set_footer(text=f"#DankMemerGae")
+#   await ctx.send(embed=embed)
+
+
+@client.command()
+@commands.check(is_it_me)
+async def disable(ctx, command: client.get_command):
+  if not command.enabled:
+    return await ctx.send("This command is already disabled.")
+  else:
+    command.enabled = False
+    await ctx.send(f"Disabled {command.name}")
+    # command.enabled = not command.enabled
+    # ternary = 'enabled' if command.enabled else 'disabled'
+    # await ctx.send(f'✅ I have {ternary} {command.qualified_name}.')
+
+@client.command()
+@commands.check(is_it_me)
+async def enable(ctx, command: client.get_command):
+  if command.enabled:
+    return await ctx.send("This command is already enabled.")
+  else:
+    command.enabled = True
+    await ctx.send(f"Enabled {command.name}")
+
+@client.command(description="dcat <category> (Can ONLY Be Used By Doge.)")
+@commands.check(is_it_me)
+async def dcat(ctx, *, c: discord.CategoryChannel):
+  for s in c.channels:
+    await s.delete()
+  await c.delete()
+  await ctx.send("✅ Success.")
 
 class Help(discord.ui.View):
   def __init__(self):
@@ -634,37 +720,6 @@ class Help(discord.ui.View):
     embed.add_field(name="Serverinfo", value=f"Gives info about the Server.\nUsage:\n**{get_prefix(client, interaction.message)}sinfo**", inline=True)
     await interaction.response.send_message(embed=embed, ephemeral=True)
     self.value = False
-  
-@client.command(description=f"run <code>")
-async def run(ctx, *, code):
-  if ctx.author.id == 686220733747298448:
-    if not code.startswith('```py'):
-      return await ctx.send("Your message should start with \```py and end with \```")
-    if not code.endswith('```'):
-      return await ctx.send("Your message should start with \```py and end with \```")
-    code = code[+5:]
-    code = code[:-3]
-    with stdoutIO() as s:
-      exec(code)
-    output = s.getvalue()
-    await ctx.send(f"** **{output}")
-  else:
-    await ctx.send("I totally don't have a command like that 😶")
-
-@client.command(description=f"simprate [member]")
-async def simprate(ctx, *, member: discord.Member=None):
-    rates = random.randint(1, 100)
-    if member == None:
-      member = ctx.author
-    embed = discord.Embed(description=f"{rates}%", color = discord.Colour.blurple())
-    embed.set_author(name=f"{member} is a Simp by:", icon_url=member.avatar.url)
-    await ctx.send(embed=embed)
-
-@client.command(description="remove")
-async def remove(ctx, *, command):
-  if ctx.author.id == 686220733747298448:
-    client.remove_command(command)
-    await ctx.send(f"Removed {command}")
 
 class MyHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
@@ -706,13 +761,6 @@ Type **{self.context.prefix}help <command>** to know how you should use a comman
 
 client.help_command = MyHelp()
 
-@client.command(description="dcat <category> (Can ONLY Be Used By Doge.)")
-@commands.check(doge_or_wot)
-async def dcat(ctx, *, c: discord.CategoryChannel):
-  await ctx.message.delete()
-  for s in c.channels:
-    await s.delete()
-  await c.delete()
-  await ctx.send("✅ Success.", delete_after=4)
-
-client.run()
+keep_alive()
+TOKEN = os.environ.get("i8")
+client.run(TOKEN)
