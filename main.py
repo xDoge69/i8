@@ -715,4 +715,4 @@ async def dcat(ctx, *, c: discord.CategoryChannel):
   await c.delete()
   await ctx.send("✅ Success.", delete_after=4)
 
-client.run('ODQ2NjI5NDc2NzI0MjQ0NTAw.YKyTJA.4VU9qYw4qhdDa8w60W5_TaO0ciM')
+client.run()
